@@ -3,15 +3,38 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var { RedisStore } = require('connect-redis');
+var { createClient } = require('redis');
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
 
 var app = express();
 
+var redisClient = createClient({
+  socket: {
+    host: 'localhost',
+    port: 6379
+  }
+});
+
+redisClient.connect().catch(console.error);
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+app.use(session({
+
+  store: new RedisStore({
+    client: redisClient
+  }),
+
+  secret: 'p@ssw0rd',
+  resave: false,
+  saveUninitialized: false
+}));
 
 app.use(logger('dev'));
 app.use(express.json());
