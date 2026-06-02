@@ -87,6 +87,11 @@ router.get('/menus', function (req, res, next){
     });
 });
 
+router.post('/menus', function(req, res, next){
+
+    res.send(req.body);
+});
+
 router.get('/reservations', function (req, res, next){
 
     res.render('admin/reservations', admin.getParams(req, {
