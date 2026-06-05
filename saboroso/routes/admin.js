@@ -3,6 +3,8 @@ var users = require("./../inc/users");
 var admin = require("./../inc/admin");
 var menus = require("./../inc/menu")
 var router = express.Router();
+var formidable = require('formidable');
+var path = require('path');
 
 router.use(function(req, res, next){
 
@@ -44,13 +46,15 @@ router.get('/', function (req, res, next){
 
 router.post('/login', function (req, res, next){
 
-    if(!req.body.email){
+    var body = req.body || req.fields || {};
+
+    if(!body.email){
         users.render(req,res, "Preencha o campo e-mail.");
-    } else if (!req.body.password){
+    } else if (!body.password){
         users.render(req, res, "Preencha o campo senha.");
     } else {
 
-        users.login(req.body.email, req.body.password).then(user => {
+        users.login(body.email, body.password).then(user => {
 
             req.session.user = user;
             res.redirect("/admin");
@@ -89,7 +93,96 @@ router.get('/menus', function (req, res, next){
 
 router.post('/menus', function(req, res, next){
 
-    res.send(req.body);
+    const fields = req.fields || {};
+    const files = req.files || {};
+    const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
+    const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
+    const price = Array.isArray(fields.price) ? fields.price[0] : fields.price;
+    const photo = Array.isArray(files.photo) ? files.photo[0] : files.photo;
+
+    if (!title) {
+        return res.status(400).json({ error: 'Preencha o campo título.' });
+    }
+
+    if (!description) {
+        return res.status(400).json({ error: 'Preencha o campo descrição.' });
+    }
+
+    if (!price) {
+        return res.status(400).json({ error: 'Preencha o campo preço.' });
+    }
+
+    if (!photo || !photo.originalFilename) {
+        return res.status(400).json({ error: 'Envie uma foto para salvar o menu.' });
+    }
+
+    menus.save(fields, files).then(results=>{
+
+        res.json(results);
+    }).catch(err=>{
+
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
+router.post('/menus/update', function(req, res, next){
+
+    const fields = req.fields || req.body || {};
+    const files = req.files || {};
+    const id = Array.isArray(fields.id) ? fields.id[0] : fields.id;
+    const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
+    const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
+    const price = Array.isArray(fields.price) ? fields.price[0] : fields.price;
+    const currentPhoto = Array.isArray(fields.currentPhoto) ? fields.currentPhoto[0] : fields.currentPhoto;
+    const photo = Array.isArray(files.photo) ? files.photo[0] : files.photo;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID do menu não informado.' });
+    }
+
+    if (!title) {
+        return res.status(400).json({ error: 'Preencha o campo título.' });
+    }
+
+    if (!description) {
+        return res.status(400).json({ error: 'Preencha o campo descrição.' });
+    }
+
+    if (!price) {
+        return res.status(400).json({ error: 'Preencha o campo preço.' });
+    }
+
+    if (!currentPhoto && (!photo || !photo.originalFilename)) {
+        return res.status(400).json({ error: 'Envie uma foto para salvar o menu.' });
+    }
+
+    menus.update(fields, files).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
+router.post('/menus/delete', function(req, res, next){
+
+    const body = req.body || req.fields || {};
+    const id = Array.isArray(body.id) ? body.id[0] : body.id;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID do menu não informado.' });
+    }
+
+    menus.delete(id).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
 });
 
 router.get('/reservations', function (req, res, next){

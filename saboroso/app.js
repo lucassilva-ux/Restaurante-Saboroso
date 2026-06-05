@@ -6,6 +6,8 @@ var logger = require('morgan');
 var session = require('express-session');
 var { RedisStore } = require('connect-redis');
 var { createClient } = require('redis');
+var formidable = require('formidable');
+var path = require('path');
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
@@ -24,6 +26,38 @@ redisClient.connect().catch(console.error);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+app.use(function(req, res, next){
+
+  if (req.method === 'POST' && req.is('multipart/form-data')) {
+
+    console.log('POST RECEBIDO:', req.url);
+
+    var form = new formidable.IncomingForm({
+      uploadDir: path.join(__dirname, '/public/images'),
+      keepExtensions: true,
+      allowEmptyFiles: true,
+      minFileSize: 0
+    });
+
+    form.parse(req, function(err, fields, files) {
+      if (err) {
+        return next(err);
+      }
+
+      console.log('FORM PARSE FINALIZADO');
+
+      req.fields = fields;
+      req.files = files;
+      req.body = fields;
+
+      next();
+    });
+
+  } else {
+    next();
+  }
+});
 
 app.use(session({
 
@@ -52,6 +86,14 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
+  console.error(err);
+
+  if (req.originalUrl === '/admin/menus' && req.method === 'POST') {
+    return res.status(err.status || 500).json({
+      error: err.message || 'Erro interno ao salvar o menu.'
+    });
+  }
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
