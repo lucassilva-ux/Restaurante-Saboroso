@@ -64,7 +64,7 @@
                   <td><%= row.name %></td>
                   <td><%= row.email %></td>
                   <td><%= row.people %></td>
-                  <td><%= row.date_display %></td>
+                  <td><%= moment(row.date_input || row.date).locale('pt-br').format('DD [de] MMMM [de] YYYY') %></td>
                   <td><%= row.time_display %></td>
                   <td>
                     <button type="button" class="btn btn-xs btn-info btn-update" data-toggle="modal" data-target="#modal-update">

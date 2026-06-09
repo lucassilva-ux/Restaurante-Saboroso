@@ -7,6 +7,8 @@ var session = require('express-session');
 var { RedisStore } = require('connect-redis');
 var { createClient } = require('redis');
 var formidable = require('formidable');
+var moment = require('moment');
+require('moment/locale/pt-br');
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
@@ -25,6 +27,7 @@ redisClient.connect().catch(console.error);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.locals.moment = moment;
 
 app.use(function(req, res, next){
 
