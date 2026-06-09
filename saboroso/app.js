@@ -7,7 +7,6 @@ var session = require('express-session');
 var { RedisStore } = require('connect-redis');
 var { createClient } = require('redis');
 var formidable = require('formidable');
-var path = require('path');
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
@@ -36,8 +35,10 @@ app.use(function(req, res, next){
     var form = new formidable.IncomingForm({
       uploadDir: path.join(__dirname, '/public/images'),
       keepExtensions: true,
-      allowEmptyFiles: true,
-      minFileSize: 0
+      allowEmptyFiles: false,
+      filter: ({ originalFilename, mimetype }) => {
+        return Boolean(originalFilename && mimetype);
+      }
     });
 
     form.parse(req, function(err, fields, files) {

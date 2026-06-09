@@ -59,7 +59,7 @@
     <div class="modal fade" id="modal-create">
       <div class="modal-dialog">
         <div class="modal-content" style="border-top: 3px solid #00a65a;">
-          <form id="modal-create-form" method="post" enctype="multipart/form-data">
+          <form id="modal-create-form" method="post" enctype="multipart/form-data" action="/admin/menus">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -81,7 +81,7 @@
               </div>
               <div class="form-group">
                 <label for="inputPhotoCreate">Foto</label>
-                <img id="previewPhotoCreate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="dist/img/boxed-bg.jpg">
+                <img id="previewPhotoCreate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/dist/img/boxed-bg.jpg">
                 <input type="file" class="form-control" id="inputPhotoCreate" name="photo">
               </div>
             </div>
@@ -97,7 +97,7 @@
     <div class="modal fade" id="modal-update">
       <div class="modal-dialog">
         <div class="modal-content" style="border-top: 3px solid #00c0ef;">
-          <form id="modal-update-form" method="post" enctype="multipart/form-data">
+          <form id="modal-update-form" method="post" enctype="multipart/form-data" action="/admin/menus/update">
             <input type="hidden" name="id">
             <input type="hidden" name="currentPhoto">
             <div class="modal-header">
@@ -121,7 +121,7 @@
               </div>
               <div class="form-group">
                 <label for="inputPhotoUpdate">Foto</label>
-                <img id="previewPhotoUpdate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="dist/img/boxed-bg.jpg">
+                <img id="previewPhotoUpdate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/dist/img/boxed-bg.jpg">
                 <input type="file" class="form-control" id="inputPhotoUpdate" name="photo">
                 <p class="help-block">Deixe vazio para manter a foto atual.</p>
               </div>

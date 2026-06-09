@@ -1,18 +1,108 @@
-let conn = require('./db');
+let fs = require('fs');
 let path = require('path');
+let conn = require('./db');
+
+const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
+
+function normalizeValue(value) {
+    return Array.isArray(value) ? value[0] : value;
+}
+
+function getUploadedPhotoPath(photoFile) {
+    if (!photoFile || !photoFile.originalFilename) {
+        return null;
+    }
+
+    return `images/${path.parse(photoFile.filepath).base}`;
+}
+
+function resolvePhotoPath(photo) {
+    if (!photo) {
+        return null;
+    }
+
+    const filename = path.basename(photo);
+    const absolutePath = path.join(IMAGES_DIR, filename);
+
+    if (path.dirname(absolutePath) !== IMAGES_DIR) {
+        return null;
+    }
+
+    return absolutePath;
+}
+
+function unlinkFileIfExists(filePath) {
+    if (!filePath) {
+        return Promise.resolve();
+    }
+
+    return fs.promises.unlink(filePath).catch(err => {
+        if (err.code === 'ENOENT') {
+            return;
+        }
+
+        throw err;
+    });
+}
+
+function deletePhotoIfUnused(photo, ignoreId) {
+    const photoPath = resolvePhotoPath(photo);
+
+    if (!photoPath) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+
+        const sql = ignoreId
+            ? `
+                SELECT COUNT(*) AS total
+                  FROM tb_menus
+                 WHERE photo = ?
+                   AND id <> ?
+                `
+            : `
+                SELECT COUNT(*) AS total
+                  FROM tb_menus
+                 WHERE photo = ?
+                `;
+
+        const params = ignoreId ? [photo, ignoreId] : [photo];
+
+        conn.query(sql, params, async (err, results) => {
+
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            if (results[0].total > 0) {
+                resolve();
+                return;
+            }
+
+            try {
+                await unlinkFileIfExists(photoPath);
+                resolve();
+            } catch (unlinkErr) {
+                reject(unlinkErr);
+            }
+        });
+    });
+}
 
 module.exports = {
-    getMenus(){
+    getMenus() {
 
-        return new Promise((resolve, reject)=> {
+        return new Promise((resolve, reject) => {
 
-            conn.query( `
+            conn.query(`
                 SELECT * FROM tb_menus ORDER BY title
-                `, (err, results)=>{
+                `, (err, results) => {
 
-                if(err){
-
+                if (err) {
                     reject(err);
+                    return;
                 }
 
                 resolve(results);
@@ -20,14 +110,15 @@ module.exports = {
         });
     },
 
-    save(fields, files){
-        
-        return new Promise((resolve, reject)=>{
+    save(fields, files) {
 
-            const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
-            const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
-            const price = Array.isArray(fields.price) ? fields.price[0] : fields.price;
-            const photoFile = Array.isArray(files.photo) ? files.photo[0] : files.photo;
+        return new Promise((resolve, reject) => {
+
+            const title = normalizeValue(fields.title);
+            const description = normalizeValue(fields.description);
+            const price = normalizeValue(fields.price);
+            const photoFile = normalizeValue(files.photo);
+            const photo = getUploadedPhotoPath(photoFile);
 
             if (!photoFile || !photoFile.originalFilename) {
                 reject(new Error('Envie uma foto para salvar o menu.'));
@@ -36,58 +127,57 @@ module.exports = {
 
             conn.query(`
                 INSERT INTO tb_menus (title, description, price, photo)
-                VALUES(?, ?, ?, ?) 
+                VALUES(?, ?, ?, ?)
                 `, [
                     title,
                     description,
                     price,
-                    `images/${path.parse(photoFile.filepath).base}`
+                    photo
                 ], (err, results) => {
 
                     if (err) {
-                        reject(err);
-                    } else {
-
-                        resolve(results);
+                        unlinkFileIfExists(resolvePhotoPath(photo))
+                            .finally(() => reject(err));
+                        return;
                     }
+
+                    resolve(results);
                 });
         });
     },
 
-    update(fields, files){
+    update(fields, files) {
 
         return new Promise((resolve, reject) => {
 
-            const id = Array.isArray(fields.id) ? fields.id[0] : fields.id;
-            const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
-            const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
-            const price = Array.isArray(fields.price) ? fields.price[0] : fields.price;
-            const currentPhoto = Array.isArray(fields.currentPhoto) ? fields.currentPhoto[0] : fields.currentPhoto;
-            const photoFile = files && files.photo ? (Array.isArray(files.photo) ? files.photo[0] : files.photo) : null;
+            const id = normalizeValue(fields.id);
+            const title = normalizeValue(fields.title);
+            const description = normalizeValue(fields.description);
+            const price = normalizeValue(fields.price);
+            const currentPhoto = normalizeValue(fields.currentPhoto);
+            const photoFile = files && files.photo ? normalizeValue(files.photo) : null;
+            const uploadedPhoto = getUploadedPhotoPath(photoFile);
+            const photo = uploadedPhoto || currentPhoto;
 
             if (!id) {
-                reject(new Error('ID do menu não informado.'));
+                reject(new Error('ID do menu nao informado.'));
                 return;
             }
 
             if (!title) {
-                reject(new Error('Título é obrigatório.'));
+                reject(new Error('Titulo e obrigatorio.'));
                 return;
             }
 
             if (!description) {
-                reject(new Error('Descrição é obrigatória.'));
+                reject(new Error('Descricao e obrigatoria.'));
                 return;
             }
 
             if (!price) {
-                reject(new Error('Preço é obrigatório.'));
+                reject(new Error('Preco e obrigatorio.'));
                 return;
             }
-
-            const photo = photoFile && photoFile.originalFilename
-                ? `images/${path.parse(photoFile.filepath).base}`
-                : currentPhoto;
 
             conn.query(`
                 UPDATE tb_menus
@@ -105,29 +195,60 @@ module.exports = {
                 ], (err, results) => {
 
                     if (err) {
-                        reject(err);
-                    } else {
-                        resolve(results);
+                        unlinkFileIfExists(resolvePhotoPath(uploadedPhoto))
+                            .finally(() => reject(err));
+                        return;
                     }
+
+                    if (!uploadedPhoto || uploadedPhoto === currentPhoto) {
+                        resolve(results);
+                        return;
+                    }
+
+                    deletePhotoIfUnused(currentPhoto, id)
+                        .then(() => resolve(results))
+                        .catch(reject);
                 });
         });
     },
 
-    delete(id){
+    delete(id) {
 
         return new Promise((resolve, reject) => {
 
             conn.query(`
-                DELETE FROM tb_menus
+                SELECT photo
+                  FROM tb_menus
                  WHERE id = ?
                 `, [id], (err, results) => {
 
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(results);
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                if (!results.length) {
+                    resolve({ affectedRows: 0 });
+                    return;
+                }
+
+                const currentPhoto = results[0].photo;
+
+                conn.query(`
+                    DELETE FROM tb_menus
+                     WHERE id = ?
+                    `, [id], (deleteErr, deleteResults) => {
+
+                    if (deleteErr) {
+                        reject(deleteErr);
+                        return;
                     }
+
+                    deletePhotoIfUnused(currentPhoto)
+                        .then(() => resolve(deleteResults))
+                        .catch(reject);
                 });
+            });
         });
     }
 };
