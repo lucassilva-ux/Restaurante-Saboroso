@@ -262,6 +262,12 @@ router.post('/reservations/update', function(req, res, next) {
     }
 
     reservations.update(body).then(results => {
+        if (!results.affectedRows) {
+            return res.status(404).json({
+                error: 'Reserva nao encontrada.'
+            });
+        }
+
         res.json(results);
     }).catch(err => {
         res.status(500).json({
@@ -280,6 +286,12 @@ router.post('/reservations/delete', function(req, res, next) {
     }
 
     reservations.delete(id).then(results => {
+        if (!results.affectedRows) {
+            return res.status(404).json({
+                error: 'Reserva nao encontrada.'
+            });
+        }
+
         res.json(results);
     }).catch(err => {
         res.status(500).json({
