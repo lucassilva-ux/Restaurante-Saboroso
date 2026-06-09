@@ -80,6 +80,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/.well-known/appspecific/com.chrome.devtools.json', function(req, res) {
+  res.status(204).end();
+});
+
 app.use('/', indexRouter);
 app.use('/admin', adminRouter);
 
@@ -90,7 +94,9 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  console.error(err);
+  if (err.status !== 404) {
+    console.error(err);
+  }
 
   if (req.originalUrl === '/admin/menus' && req.method === 'POST') {
     return res.status(err.status || 500).json({

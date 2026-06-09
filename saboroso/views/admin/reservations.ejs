@@ -182,100 +182,12 @@
     </div>
 
 <%- include('inc/footer') -%>
+<script src="/js/moment.min.js"></script>
+<script src="/js/hcode-formsave.js"></script>
+<script src="/js/hcode-grid.js"></script>
 <script>
-  let formCreate = document.querySelector('#modal-create-form');
-  let formUpdate = document.querySelector('#modal-update-form');
-  let updateButtons = document.querySelectorAll('.btn-update');
-  let deleteButtons = document.querySelectorAll('.btn-delete');
-
-  function parseRow(button) {
-    return JSON.parse(button.closest('tr').dataset.row);
-  }
-
-  function parseResponse(response) {
-    const contentType = response.headers.get('content-type') || '';
-
-    if (contentType.includes('application/json')) {
-      return response.json().then(payload => ({ response, payload }));
-    }
-
-    return response.text().then(text => ({ response, payload: { error: text } }));
-  }
-
-  function submitForm(form, url, fallbackMessage) {
-    const formData = new FormData(form);
-
-    return fetch(url, {
-      method: 'POST',
-      body: formData
-    })
-    .then(parseResponse)
-    .then(({ response, payload }) => {
-      if (!response.ok) {
-        throw new Error(payload.error || fallbackMessage);
-      }
-
-      window.location.reload();
+    new HcodeGrid({
+        deleteUrl: '/admin/reservations/${data.id}',
+        deleteMsg: 'Deseja realmente excluir a reserva de ${data.name}?'
     });
-  }
-
-  formCreate.addEventListener('submit', e => {
-    e.preventDefault();
-
-    submitForm(formCreate, '/admin/reservations', 'Nao foi possivel salvar a reserva.').catch(err => {
-      alert(err.message || 'Nao foi possivel salvar a reserva.');
-    });
-  });
-
-  updateButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const row = parseRow(button);
-
-      formUpdate.querySelector('[name=id]').value = row.id;
-      formUpdate.querySelector('[name=name]').value = row.name;
-      formUpdate.querySelector('[name=email]').value = row.email;
-      formUpdate.querySelector('[name=people]').value = row.people;
-      formUpdate.querySelector('[name=date]').value = row.date_input;
-      formUpdate.querySelector('[name=time]').value = row.time_input;
-    });
-  });
-
-  formUpdate.addEventListener('submit', e => {
-    e.preventDefault();
-
-    submitForm(formUpdate, '/admin/reservations/update', 'Nao foi possivel atualizar a reserva.').catch(err => {
-      alert(err.message || 'Nao foi possivel atualizar a reserva.');
-    });
-  });
-
-  deleteButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const row = parseRow(button);
-
-      if (!confirm(`Deseja excluir a reserva de "${row.name}"?`)) {
-        return;
-      }
-
-      fetch('/admin/reservations/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
-        body: new URLSearchParams({
-          id: row.id
-        })
-      })
-      .then(parseResponse)
-      .then(({ response, payload }) => {
-        if (!response.ok) {
-          throw new Error(payload.error || 'Nao foi possivel excluir a reserva.');
-        }
-
-        window.location.reload();
-      })
-      .catch(err => {
-        alert(err.message || 'Nao foi possivel excluir a reserva.');
-      });
-    });
-  });
 </script>

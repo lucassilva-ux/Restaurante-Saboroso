@@ -186,6 +186,17 @@ router.post('/menus/delete', function(req, res, next){
     });
 });
 
+router.delete('/menus/:id', function(req, res, next) {
+
+    menus.delete(req.params.id).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
 router.get('/reservations', function (req, res, next){
 
     reservations.getReservations(req.query).then(data => {
@@ -286,6 +297,23 @@ router.post('/reservations/delete', function(req, res, next) {
     }
 
     reservations.delete(id).then(results => {
+        if (!results.affectedRows) {
+            return res.status(404).json({
+                error: 'Reserva nao encontrada.'
+            });
+        }
+
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
+router.delete('/reservations/:id', function(req, res, next) {
+
+    reservations.delete(req.params.id).then(results => {
         if (!results.affectedRows) {
             return res.status(404).json({
                 error: 'Reserva nao encontrada.'
