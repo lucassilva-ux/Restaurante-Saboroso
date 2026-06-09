@@ -2,6 +2,7 @@ var express = require("express");
 var users = require("./../inc/users");
 var admin = require("./../inc/admin");
 var menus = require("./../inc/menu")
+var reservations = require("./../inc/reservations");
 var router = express.Router();
 var formidable = require('formidable');
 var path = require('path');
@@ -187,9 +188,104 @@ router.post('/menus/delete', function(req, res, next){
 
 router.get('/reservations', function (req, res, next){
 
-    res.render('admin/reservations', admin.getParams(req, {
-        date: {}
-    }));
+    reservations.getReservations(req.query).then(data => {
+
+        res.render('admin/reservations', admin.getParams(req, {
+            data,
+            date: {
+                start: req.query.start || '',
+                end: req.query.end || ''
+            }
+        }));
+    }).catch(next);
+});
+
+router.post('/reservations', function(req, res, next) {
+
+    const body = req.body || req.fields || {};
+
+    if (!body.name) {
+        return res.status(400).json({ error: 'Preencha o campo nome.' });
+    }
+
+    if (!body.email) {
+        return res.status(400).json({ error: 'Preencha o campo e-mail.' });
+    }
+
+    if (!body.people) {
+        return res.status(400).json({ error: 'Preencha o campo pessoas.' });
+    }
+
+    if (!body.date) {
+        return res.status(400).json({ error: 'Preencha o campo data.' });
+    }
+
+    if (!body.time) {
+        return res.status(400).json({ error: 'Preencha o campo hora.' });
+    }
+
+    reservations.save(body).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
+router.post('/reservations/update', function(req, res, next) {
+
+    const body = req.body || req.fields || {};
+
+    if (!body.id) {
+        return res.status(400).json({ error: 'ID da reserva nao informado.' });
+    }
+
+    if (!body.name) {
+        return res.status(400).json({ error: 'Preencha o campo nome.' });
+    }
+
+    if (!body.email) {
+        return res.status(400).json({ error: 'Preencha o campo e-mail.' });
+    }
+
+    if (!body.people) {
+        return res.status(400).json({ error: 'Preencha o campo pessoas.' });
+    }
+
+    if (!body.date) {
+        return res.status(400).json({ error: 'Preencha o campo data.' });
+    }
+
+    if (!body.time) {
+        return res.status(400).json({ error: 'Preencha o campo hora.' });
+    }
+
+    reservations.update(body).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
+});
+
+router.post('/reservations/delete', function(req, res, next) {
+
+    const body = req.body || req.fields || {};
+    const id = Array.isArray(body.id) ? body.id[0] : body.id;
+
+    if (!id) {
+        return res.status(400).json({ error: 'ID da reserva nao informado.' });
+    }
+
+    reservations.delete(id).then(results => {
+        res.json(results);
+    }).catch(err => {
+        res.status(500).json({
+            error: err.message || String(err)
+        });
+    });
 });
 
 router.get('/users', function (req, res, next){
