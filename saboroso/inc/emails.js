@@ -1,22 +1,28 @@
 var conn = require("./db");
+let Pagination = require("./pagination");
 
 module.exports = {
 
-    getEmails(){
+    getEmails(page){
 
-        return new Promise((resolve, reject)=>{
+        if (!page) page = 1;
 
-            conn.query(`
-                SELECT * FROM tb_emails ORDER BY email
-            `, (err, results)=>{
+        let pag = new Pagination(
+            `
+                SELECT SQL_CALC_FOUND_ROWS * FROM tb_emails ORDER BY email LIMIT ?, ?
+            `,
+            [],
+            10
+        );
 
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(results);
-                }
+        return pag.getPage(page).then(data=>{
 
-            });
+            return {
+                data,
+                currentPage: pag.getCurrentPage(),
+                totalPages: pag.getTotalPages(),
+                total: pag.getTotal()
+            };
 
         });
 

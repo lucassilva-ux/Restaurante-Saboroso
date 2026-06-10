@@ -5,6 +5,7 @@ var menus = require("./../inc/menu")
 var reservations = require("./../inc/reservations");
 var contacts = require("./../inc/contacts");
 var emails = require("./../inc/emails");
+var moment = require("moment");
 var router = express.Router();
 var formidable = require('formidable');
 var path = require('path');
@@ -76,10 +77,11 @@ router.get('/login', function (req, res, next){
 
 router.get('/contacts', function (req, res, next){
 
-    contacts.getContacts().then(data => {
+    contacts.getContacts(req.query.page).then(results => {
 
         res.render("admin/contacts", admin.getParams(req, {
-            data
+            data: results.data,
+            pagination: admin.getPagination(req, results.currentPage, results.totalPages)
         }));
 
     });
@@ -100,10 +102,11 @@ router.delete("/contacts/:id", function(req, res, next){
 
 router.get('/emails', function (req, res, next){
 
-    emails.getEmails().then(data=>{
+    emails.getEmails(req.query.page).then(results=>{
 
         res.render("admin/emails", admin.getParams(req, {
-            data
+            data: results.data,
+            pagination: admin.getPagination(req, results.currentPage, results.totalPages)
         }));
 
     });
@@ -124,10 +127,11 @@ router.delete("/emails/:id", function(req, res, next){
 
 router.get('/menus', function (req, res, next){
 
-    menus.getMenus().then(data => {
+    menus.getMenusPage(req.query.page).then(results => {
 
         res.render('admin/menus', admin.getParams(req, {
-            data
+            data: results.data,
+            pagination: admin.getPagination(req, results.currentPage, results.totalPages)
         }));
     });
 });
@@ -239,16 +243,23 @@ router.delete('/menus/:id', function(req, res, next) {
 
 router.get('/reservations', function (req, res, next){
 
-    reservations.getReservations(req.query).then(data => {
+    reservations.getReservations(req.query.page).then(results => {
 
         res.render('admin/reservations', admin.getParams(req, {
-            data,
+            data: results.data,
+            pagination: admin.getPagination(req, results.currentPage, results.totalPages),
+            moment,
             date: {
                 start: req.query.start || '',
                 end: req.query.end || ''
             }
         }));
-    }).catch(next);
+
+    }).catch(err => {
+
+        next(err);
+
+    });
 });
 
 router.post('/reservations', function(req, res, next) {
@@ -370,10 +381,11 @@ router.delete('/reservations/:id', function(req, res, next) {
 
 router.get('/users', function (req, res, next){
 
-    users.getUsers().then(data => {
+    users.getUsers(req.query.page).then(results => {
 
         res.render('admin/users', admin.getParams(req, {
-            data
+            data: results.data,
+            pagination: admin.getPagination(req, results.currentPage, results.totalPages)
         }));
 
     }).catch(err => {

@@ -1,4 +1,5 @@
 var conn = require('./db');
+let Pagination = require("./pagination");
 
 function normalizeDateValue(dateValue) {
 
@@ -123,48 +124,35 @@ module.exports = {
         });
     },
 
-    getReservations(filters = {}) {
+    getReservations(page) {
 
-        return new Promise((resolve, reject) => {
+        if (!page) page = 1;
 
-            const where = [];
-            const params = [];
-            const start = normalizeDateValue(filters.start);
-            const end = normalizeDateValue(filters.end);
+        let pag = new Pagination(
+            `
+                SELECT SQL_CALC_FOUND_ROWS * FROM tb_reservations ORDER BY name LIMIT ?, ?
+            `,
+            [],
+            10
+        );
 
-            if (start) {
-                where.push('date >= ?');
-                params.push(start);
-            }
+        return pag.getPage(page).then(data => {
 
-            if (end) {
-                where.push('date <= ?');
-                params.push(end);
-            }
-
-            const sql = `
-                SELECT *
-                  FROM tb_reservations
-                 ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-                 ORDER BY date DESC, time DESC, id DESC
-            `;
-
-            conn.query(sql, params, (err, results) => {
-
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                resolve(results.map(row => ({
+            return {
+                data: data.map(row => ({
                     ...row,
                     date_input: formatDateToInput(row.date),
                     date_display: formatDateToDisplay(row.date),
                     time_input: formatTimeValue(row.time),
                     time_display: formatTimeValue(row.time)
-                })));
-            });
+                })),
+                currentPage: pag.getCurrentPage(),
+                totalPages: pag.getTotalPages(),
+                total: pag.getTotal()
+            };
+
         });
+
     },
 
     update(fields) {

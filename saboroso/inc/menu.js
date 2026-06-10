@@ -1,6 +1,7 @@
 let fs = require('fs');
 let path = require('path');
 let conn = require('./db');
+let Pagination = require("./pagination");
 
 const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
 
@@ -108,6 +109,31 @@ module.exports = {
                 resolve(results);
             });
         });
+    },
+
+    getMenusPage(page) {
+
+        if (!page) page = 1;
+
+        let pag = new Pagination(
+            `
+                SELECT SQL_CALC_FOUND_ROWS * FROM tb_menus ORDER BY title LIMIT ?, ?
+            `,
+            [],
+            10
+        );
+
+        return pag.getPage(page).then(data => {
+
+            return {
+                data,
+                currentPage: pag.getCurrentPage(),
+                totalPages: pag.getTotalPages(),
+                total: pag.getTotal()
+            };
+
+        });
+
     },
 
     save(fields, files) {

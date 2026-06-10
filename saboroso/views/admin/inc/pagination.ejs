@@ -1,0 +1,11 @@
+<% if (pagination && pagination.totalPages > 1) { %>
+<div class="box-footer clearfix">
+    <ul class="pagination pagination-sm no-margin pull-right">
+        <% pagination.pages.forEach(function(item){ %>
+        <li class="<%= item.active ? 'active' : '' %>">
+            <a href="<%= item.href %>"><%= item.page %></a>
+        </li>
+        <% }); %>
+    </ul>
+</div>
+<% } %>

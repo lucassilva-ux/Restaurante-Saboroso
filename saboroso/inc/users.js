@@ -1,4 +1,5 @@
 var conn = require('./db');
+let Pagination = require("./pagination");
 
 module.exports = {
 
@@ -55,21 +56,26 @@ module.exports = {
 
     },
 
-    getUsers() {
+    getUsers(page) {
 
-        return new Promise((resolve, reject) => {
+        if (!page) page = 1;
 
-            conn.query(`
-                SELECT * FROM tb_users ORDER BY name
-            `, (err, results) => {
+        let pag = new Pagination(
+            `
+                SELECT SQL_CALC_FOUND_ROWS * FROM tb_users ORDER BY name LIMIT ?, ?
+            `,
+            [],
+            10
+        );
 
-                if (err) {
-                    reject(err);
-                }
+        return pag.getPage(page).then(data => {
 
-                resolve(results);
-
-            });
+            return {
+                data,
+                currentPage: pag.getCurrentPage(),
+                totalPages: pag.getTotalPages(),
+                total: pag.getTotal()
+            };
 
         });
 

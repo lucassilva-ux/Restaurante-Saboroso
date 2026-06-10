@@ -45,6 +45,39 @@ module.exports = {
         }, params);
     },
 
+    getPagination(req, currentPage, totalPages){
+
+        let pages = [];
+        let path = `${req.baseUrl}${req.path}`;
+
+        for (let page = 1; page <= totalPages; page++) {
+
+            let query = Object.assign({}, req.query, {
+                page
+            });
+
+            let href = path + '?' + Object.keys(query).filter(key => {
+                return query[key];
+            }).map(key => {
+                return key + '=' + encodeURIComponent(query[key]);
+            }).join('&');
+
+            pages.push({
+                page,
+                href,
+                active: page === currentPage
+            });
+
+        }
+
+        return {
+            currentPage,
+            totalPages,
+            pages
+        };
+
+    },
+
     getMenus(req){
 
         let menus = [
@@ -88,7 +121,7 @@ module.exports = {
 
         menus.map(menu => {
 
-            if(menu.href === `/admin${req.url}`) menu.active = true;
+            if(menu.href === `${req.baseUrl}${req.path}`) menu.active = true;
         });
 
         return menus;
