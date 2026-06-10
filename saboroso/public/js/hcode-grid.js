@@ -59,27 +59,33 @@ class HcodeGrid {
 
         this.formCreate = document.querySelector(this.options.formCreate);
 
-        this.formCreate.save().then(json => {
+        if (this.formCreate) {
 
-            this.fireEvent('afterFormCreate');
+            this.formCreate.save({
+                success:()=>{
+                    this.fireEvent('afterFormCreate');
+                },
+                failure:()=>{
+                    this.fireEvent('afterFormCreateError');
+                }
+            });
 
-        }).catch(err => {
-
-            this.fireEvent('afterFormCreateError');
-
-        });
+        }
 
         this.formUpdate = document.querySelector(this.options.formUpdate);
 
-        this.formUpdate.save().then(json => {
+        if (this.formUpdate) {
 
-            this.fireEvent('afterFormUpdate');
+            this.formUpdate.save({
+                success:()=>{
+                    this.fireEvent('afterFormUpdate');
+                },
+                failure:()=>{
+                    this.fireEvent('afterFormUpdateError');
+                }
+            });
 
-        }).catch(err => {
-
-            this.fireEvent('afterFormUpdateError');
-
-        });
+        }
 
     }
 
