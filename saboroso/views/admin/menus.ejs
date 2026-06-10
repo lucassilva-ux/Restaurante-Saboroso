@@ -81,7 +81,7 @@
               </div>
               <div class="form-group">
                 <label for="inputPhotoCreate">Foto</label>
-                <img id="previewPhotoCreate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/dist/img/boxed-bg.jpg">
+                <img id="previewPhotoCreate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/admin/dist/img/boxed-bg.jpg">
                 <input type="file" class="form-control" id="inputPhotoCreate" name="photo">
               </div>
             </div>
@@ -121,7 +121,7 @@
               </div>
               <div class="form-group">
                 <label for="inputPhotoUpdate">Foto</label>
-                <img id="previewPhotoUpdate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/dist/img/boxed-bg.jpg">
+                <img id="previewPhotoUpdate" style="max-width: 128px; max-height: 128px; display: block; margin-bottom: 10px;" src="/admin/dist/img/boxed-bg.jpg">
                 <input type="file" class="form-control" id="inputPhotoUpdate" name="photo">
                 <p class="help-block">Deixe vazio para manter a foto atual.</p>
               </div>
@@ -136,51 +136,32 @@
     </div>
 
 <%- include('inc/footer') -%>
-<script src="/js/moment.min.js"></script>
+<script src="/js/hcode-filereader.js"></script>
 <script src="/js/hcode-formsave.js"></script>
 <script src="/js/hcode-grid.js"></script>
 <script>
-  let formUpdate = document.querySelector('#modal-update-form');
-  let updateButtons = document.querySelectorAll('.btn-update');
-  let inputPhotoCreate = document.querySelector('#inputPhotoCreate');
-  let inputPhotoUpdate = document.querySelector('#inputPhotoUpdate');
-  let previewPhotoCreate = document.querySelector('#previewPhotoCreate');
-  let previewPhotoUpdate = document.querySelector('#previewPhotoUpdate');
-  let defaultCreatePhoto = previewPhotoCreate.src;
-  let currentUpdatePhoto = previewPhotoUpdate.src;
+    new HcodeFileReader("#modal-create [type=file]", "#modal-create img");
+    new HcodeFileReader("#modal-update [type=file]", "#modal-update img");
 
-  function updateImagePreview(input, preview, fallbackSrc) {
-      let file = input.files && input.files[0];
+    new HcodeGrid({
+        deleteUrl: '/admin/menus/${data.id}',
+        deleteMsg: 'Deseja realmente excluir o menu ${data.title}?',
+        onUpdateLoad: (form, name, data) => {
 
-      if (!file) {
-          preview.src = fallbackSrc;
-          return;
-      }
+            let input = form.querySelector(`[name=${name}]`);
 
-      preview.src = URL.createObjectURL(file);
-  }
+            switch (name) {
 
-  inputPhotoCreate.addEventListener('change', () => {
-      updateImagePreview(inputPhotoCreate, previewPhotoCreate, defaultCreatePhoto);
-  });
+                case 'photo':
+                    form.querySelector("[name=currentPhoto]").value = data[name];
+                    form.querySelector("img").src = '/' + data[name];
+                    break;
 
-  inputPhotoUpdate.addEventListener('change', () => {
-      updateImagePreview(inputPhotoUpdate, previewPhotoUpdate, currentUpdatePhoto);
-  });
+                default:
+                    if (input) input.value = data[name];
 
-  new HcodeGrid({
-      deleteUrl: '/admin/menus/${data.id}',
-      deleteMsg: 'Deseja realmente excluir o menu ${data.title}?'
-  });
+            }
 
-  updateButtons.forEach(button => {
-      button.addEventListener('click', () => {
-          const row = JSON.parse(button.closest('tr').dataset.row);
-
-          formUpdate.querySelector('[name=currentPhoto]').value = row.photo;
-          currentUpdatePhoto = '/' + row.photo;
-          previewPhotoUpdate.src = currentUpdatePhoto;
-          inputPhotoUpdate.value = '';
-      });
-  });
+        }
+    });
 </script>
