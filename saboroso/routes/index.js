@@ -6,6 +6,8 @@ var contacts = require('./../inc/contacts');
 var emails = require('./../inc/emails');
 var router = express.Router();
 
+module.exports = function(io){
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
 
@@ -38,6 +40,8 @@ router.post('/contacts', function(req, res, next){
     contacts.save(req.body).then(results =>{
 
       req.body = {};
+
+      io.emit('dashboard update');
 
       contacts.render(req, res, null, 'Contato enviado com sucesso!');
     }).catch(err=>{
@@ -78,6 +82,8 @@ router.post('/reservations', function(req, res, next){
 
       req.body = {};
 
+      io.emit('dashboard update');
+
       reservations.render(req, res, null, 'Reserva realizada com sucesso!');
     }).catch(err=>{
 
@@ -115,4 +121,6 @@ router.post("/subscribe", function(req, res, next){
 
 });
 
-module.exports = router;
+return router;
+
+};

@@ -10,6 +10,8 @@ var router = express.Router();
 var formidable = require('formidable');
 var path = require('path');
 
+module.exports = function(io){
+
 router.use(function(req, res, next){
 
     if (['/login'].indexOf(req.url) === -1 && !req.session.user){
@@ -87,11 +89,26 @@ router.get('/contacts', function (req, res, next){
     });
 });
 
+router.get("/dashboard", function(req, res, next){
+
+    admin.dashboard().then(data => {
+
+        res.send(data);
+
+    }).catch(err => {
+
+        res.send(err);
+
+    });
+
+});
+
 router.delete("/contacts/:id", function(req, res, next){
 
     contacts.delete(req.params.id).then(results=>{
 
         res.send(results);
+        io.emit('dashboard update');
 
     }).catch(err=>{
 
@@ -164,6 +181,7 @@ router.post('/menus', function(req, res, next){
     menus.save(fields, files).then(results=>{
 
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err=>{
 
         res.status(500).json({
@@ -223,6 +241,7 @@ router.post('/menus/delete', function(req, res, next){
 
     menus.delete(id).then(results => {
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err => {
         res.status(500).json({
             error: err.message || String(err)
@@ -234,6 +253,7 @@ router.delete('/menus/:id', function(req, res, next) {
 
     menus.delete(req.params.id).then(results => {
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err => {
         res.status(500).json({
             error: err.message || String(err)
@@ -312,6 +332,7 @@ router.post('/reservations', function(req, res, next) {
 
     reservations.save(body).then(results => {
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err => {
         res.status(500).json({
             error: err.message || String(err)
@@ -379,6 +400,7 @@ router.post('/reservations/delete', function(req, res, next) {
         }
 
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err => {
         res.status(500).json({
             error: err.message || String(err)
@@ -396,6 +418,7 @@ router.delete('/reservations/:id', function(req, res, next) {
         }
 
         res.json(results);
+        io.emit('dashboard update');
     }).catch(err => {
         res.status(500).json({
             error: err.message || String(err)
@@ -424,6 +447,7 @@ router.post('/users', function(req, res, next) {
     users.save(req.fields).then(results => {
 
         res.send(results);
+        io.emit('dashboard update');
 
     }).catch(err => {
 
@@ -454,6 +478,7 @@ router.delete('/users/:id', function(req, res, next) {
     users.delete(req.params.id).then(results => {
 
         res.send(results);
+        io.emit('dashboard update');
 
     }).catch(err => {
 
@@ -463,4 +488,6 @@ router.delete('/users/:id', function(req, res, next) {
 
 });
 
-module.exports = router;
+return router;
+
+};
