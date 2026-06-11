@@ -243,16 +243,23 @@ router.delete('/menus/:id', function(req, res, next) {
 
 router.get('/reservations', function (req, res, next){
 
-    reservations.getReservations(req.query.page).then(results => {
+    let start = (req.query.start) ? req.query.start : moment().subtract(1, "year").format("YYYY-MM-DD");
+    let end = (req.query.end) ? req.query.end : moment().format("YYYY-MM-DD");
+
+    reservations.getReservations(
+        req.query.page,
+        req.query.start,
+        req.query.end
+    ).then(results => {
 
         res.render('admin/reservations', admin.getParams(req, {
+            date: {
+                start,
+                end
+            },
             data: results.data,
             pagination: admin.getPagination(req, results.currentPage, results.totalPages),
-            moment,
-            date: {
-                start: req.query.start || '',
-                end: req.query.end || ''
-            }
+            moment
         }));
 
     }).catch(err => {
