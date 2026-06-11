@@ -142,20 +142,30 @@ module.exports = {
             params
         );
 
-        return pag.getPage(page).then(data => {
+        return new Promise((resolve, reject) => {
 
-            return {
-                data: data.map(row => ({
-                    ...row,
-                    date_input: formatDateToInput(row.date),
-                    date_display: formatDateToDisplay(row.date),
-                    time_input: formatTimeValue(row.time),
-                    time_display: formatTimeValue(row.time)
-                })),
-                currentPage: pag.getCurrentPage(),
-                totalPages: pag.getTotalPages(),
-                total: pag.getTotal()
-            };
+            pag.getPage(page).then(data => {
+
+                resolve({
+                    data: data.map(row => ({
+                        ...row,
+                        date_input: formatDateToInput(row.date),
+                        date_display: formatDateToDisplay(row.date),
+                        time_input: formatTimeValue(row.time),
+                        time_display: formatTimeValue(row.time)
+                    })),
+                    links: pag.getNavigation({
+                        page,
+                        start: dtstart,
+                        end: dtend
+                    })
+                });
+
+            }).catch(err => {
+
+                reject(err);
+
+            });
 
         });
 

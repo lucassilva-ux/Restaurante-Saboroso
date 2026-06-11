@@ -79,7 +79,19 @@
               </tbody>
             </table>
           </div>
-          <%- include('inc/pagination', { pagination: pagination }) %>
+          <div class="box-footer clearfix">
+              <ul class="pagination pagination-sm no-margin pull-right">
+
+                  <% links.forEach(function(link){ %>
+
+                  <li class="<%= link.active ? 'active' : '' %>">
+                      <a href="<%= link.href %>"><%= link.text %></a>
+                  </li>
+
+                  <% }); %>
+
+              </ul>
+          </div>
         </div>
 
       </section>

@@ -250,15 +250,15 @@ router.get('/reservations', function (req, res, next){
         req.query.page,
         req.query.start,
         req.query.end
-    ).then(results => {
+    ).then(pagination => {
 
         res.render('admin/reservations', admin.getParams(req, {
             date: {
                 start,
                 end
             },
-            data: results.data,
-            pagination: admin.getPagination(req, results.currentPage, results.totalPages),
+            data: pagination.data,
+            links: pagination.links,
             moment
         }));
 
