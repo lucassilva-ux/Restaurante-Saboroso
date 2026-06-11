@@ -1,5 +1,6 @@
 var conn = require('./db');
 let Pagination = require("./pagination");
+var moment = require("moment");
 
 function normalizeDateValue(dateValue) {
 
@@ -164,6 +165,64 @@ module.exports = {
             }).catch(err => {
 
                 reject(err);
+
+            });
+
+        });
+
+    },
+
+    chart(req){
+
+        return new Promise((resolve, reject)=>{
+
+            conn.query(`
+                SELECT
+                    DATE_FORMAT(MIN(date), '%Y-%m-01') AS date,
+                    COUNT(*) AS total,
+                    SUM(people) / COUNT(*) AS avg_people
+                FROM tb_reservations
+                WHERE
+                    date BETWEEN ? AND ?
+                GROUP BY YEAR(date), MONTH(date)
+                ORDER BY YEAR(date) DESC, MONTH(date) DESC;
+            `, [
+                req.query.start,
+                req.query.end
+            ], (err, results)=>{
+
+                if (err) {
+                    reject(err);
+                } else {
+
+                    let months = [];
+                    let values = [];
+                    let chartData = {};
+
+                    results.forEach(row=>{
+
+                        chartData[moment(row.date).format('YYYY-MM')] = row.total;
+
+                    });
+
+                    let currentDate = moment(req.query.start, 'YYYY-MM-DD').startOf('month');
+                    let endDate = moment(req.query.end, 'YYYY-MM-DD').startOf('month');
+
+                    while (currentDate.isSameOrBefore(endDate)) {
+
+                        months.push(currentDate.locale('pt-br').format('MMM YYYY'));
+                        values.push(chartData[currentDate.format('YYYY-MM')] || 0);
+
+                        currentDate.add(1, 'month');
+
+                    }
+
+                    resolve({
+                        months,
+                        values
+                    });
+
+                }
 
             });
 
